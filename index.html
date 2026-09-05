@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kindle ↔ Audible Sync</title>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 20px;
+      font-size: 18px;
+    }
+
+    input, button {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 20px;
+      padding: 14px;
+      margin: 8px 0;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 25px;
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .small {
+      font-size: 14px;
+      opacity: 0.65;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>A Game of Thrones</h2>
+
+<p>Audible time remaining:</p>
+
+<input id="time" placeholder="e.g. 10:29">
+
+<button onclick="convert()">Find Kindle position</button>
+
+<div id="result"></div>
+
+<div class="small">
+  Calibrated for your AZW3 Kindle edition.
+</div>
+
+<script>
+
+const anchors = [
+  { remaining: 1579, position: 2947 },  // 26:19
+  { remaining: 761,  position: 8086 },  // 12:41
+  { remaining: 671,  position: 8684 },  // 11:11
+  { remaining: 629,  position: 8938 },  // 10:29
+  { remaining: 590,  position: 9173 },  // 09:50
+  { remaining: 174,  position: 11688 }  // 02:54
+];
+
+function parseTime(text) {
+  const parts = text.trim().split(":").map(Number);
+
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+
+  if (parts.length === 3) {
+    return parts[0] * 60 + parts[1] + parts[2] / 60;
+  }
+
+  return NaN;
+}
+
+function estimatePosition(t) {
+
+  for (let i = 0; i < anchors.length - 1; i++) {
+
+    const a = anchors[i];
+    const b = anchors[i + 1];
+
+    if (t <= a.remaining && t >= b.remaining) {
+
+      const fraction =
+        (a.remaining - t) /
+        (a.remaining - b.remaining);
+
+      return Math.round(
+        a.position +
+        fraction * (b.position - a.position)
+      );
+    }
+  }
+
+  return null;
+}
+
+function convert() {
+
+  const t = parseTime(
+    document.getElementById("time").value
+  );
+
+  const result =
+    document.getElementById("result");
+
+  if (isNaN(t)) {
+    result.innerText = "Enter time as HH:MM";
+    return;
+  }
+
+  const position = estimatePosition(t);
+
+  if (position === null) {
+    result.innerText =
+      "Outside calibrated range";
+    return;
+  }
+
+  result.innerText =
+    "Kindle position ≈ " + position;
+}
+
+</script>
+
+</body>
+</html>
